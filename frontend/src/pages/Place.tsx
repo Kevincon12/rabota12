@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import api from '../api/axios';
+import { useAppSelector } from '../hooks/useAppSelector';
 import {
     Container,
     Typography,
@@ -30,6 +31,7 @@ interface Image {
 
 const Place = () => {
     const { id } = useParams();
+    const user = useAppSelector((state) => state.auth.user);
 
     const [data, setData] = useState<any>(null);
 
@@ -44,15 +46,12 @@ const Place = () => {
     };
 
     useEffect(() => {
-        if (id) {
-            fetchPlace(id);
-        }
+        if (id) fetchPlace(id);
     }, [id]);
 
     const addReview = async () => {
         try {
-            if (!id) return;
-            if (!text.trim()) return;
+            if (!id || !text.trim()) return;
 
             await api.post('/reviews', {
                 place: id,
@@ -65,8 +64,7 @@ const Place = () => {
             setText('');
             fetchPlace(id);
         } catch (e: any) {
-            console.log(e?.response?.data);
-            alert(e?.response?.data?.error || 'Error sending review');
+            alert(e?.response?.data?.error || 'Error');
         }
     };
 
@@ -89,7 +87,7 @@ const Place = () => {
 
     if (!data) return null;
 
-    const { place, reviews, images, ratings } = data;
+    const { place, reviews = [], images = [], ratings } = data;
 
     return (
         <Container sx={{ mt: 4 }}>
@@ -140,15 +138,19 @@ const Place = () => {
                 </Box>
 
                 <Stack direction="row" spacing={2} sx={{ mt: 2, flexWrap: 'wrap' }}>
-                    {images.map((img: Image) => (
-                        <Card key={img._id} sx={{ width: 150 }}>
-                            <CardMedia
-                                component="img"
-                                height="120"
-                                image={`http://localhost:8000/uploads/${img.image}`}
-                            />
-                        </Card>
-                    ))}
+                    {images.length === 0 ? (
+                        <Typography sx={{ mt: 2 }}>No images</Typography>
+                    ) : (
+                        images.map((img: Image) => (
+                            <Card key={img._id} sx={{ width: 150 }}>
+                                <CardMedia
+                                    component="img"
+                                    height="120"
+                                    image={`http://localhost:8000/uploads/${img.image}`}
+                                />
+                            </Card>
+                        ))
+                    )}
                 </Stack>
             </Paper>
 
@@ -156,50 +158,65 @@ const Place = () => {
                 <Typography variant="h6">Reviews</Typography>
 
                 <Stack spacing={2} sx={{ mt: 2 }}>
-                    {reviews.map((r: Review) => (
-                        <Paper key={r._id} sx={{ p: 2 }}>
-                            <Typography sx={{ fontWeight: 700 }}>
-                                {r.user.displayName}
-                            </Typography>
+                    {reviews.length === 0 ? (
+                        <Typography>No reviews yet</Typography>
+                    ) : (
+                        reviews.map((r: Review) => (
+                            <Paper key={r._id} sx={{ p: 2 }}>
+                                <Typography sx={{ fontWeight: 700 }}>
+                                    {r.user.displayName}
+                                </Typography>
 
-                            <Typography>{r.text}</Typography>
-                        </Paper>
-                    ))}
+                                <Typography>{r.text}</Typography>
+                            </Paper>
+                        ))
+                    )}
                 </Stack>
             </Paper>
 
-            <Paper sx={{ p: 2, mt: 3 }}>
-                <Typography variant="h6">Add Review</Typography>
+            {user ? (
+                <Paper sx={{ p: 2, mt: 3 }}>
+                    <Typography variant="h6">Add Review</Typography>
 
-                <TextField
-                    fullWidth
-                    label="Review text"
-                    value={text}
-                    onChange={(e) => setText(e.target.value)}
-                    sx={{ mt: 2 }}
-                />
+                    <TextField
+                        fullWidth
+                        label="Review text"
+                        value={text}
+                        onChange={(e) => setText(e.target.value)}
+                        sx={{ mt: 2 }}
+                    />
 
-                <Stack spacing={2} sx={{ mt: 2 }}>
-                    <Box>
-                        <Typography>Food</Typography>
-                        <Rating value={food} onChange={(_, v) => setFood(v || 1)} />
-                    </Box>
+                    <Stack spacing={2} sx={{ mt: 2 }}>
+                        <Box>
+                            <Typography>Food</Typography>
+                            <Rating value={food} onChange={(_, v) => setFood(v || 1)} />
+                        </Box>
 
-                    <Box>
-                        <Typography>Service</Typography>
-                        <Rating value={service} onChange={(_, v) => setService(v || 1)} />
-                    </Box>
+                        <Box>
+                            <Typography>Service</Typography>
+                            <Rating value={service} onChange={(_, v) => setService(v || 1)} />
+                        </Box>
 
-                    <Box>
-                        <Typography>Interior</Typography>
-                        <Rating value={interior} onChange={(_, v) => setInterior(v || 1)} />
-                    </Box>
-                </Stack>
+                        <Box>
+                            <Typography>Interior</Typography>
+                            <Rating value={interior} onChange={(_, v) => setInterior(v || 1)} />
+                        </Box>
+                    </Stack>
 
-                <Button variant="contained" sx={{ mt: 3 }} onClick={addReview}>
-                    Submit review
-                </Button>
-            </Paper>
+                    <Button
+                        variant="contained"
+                        sx={{ mt: 3 }}
+                        onClick={addReview}
+                        disabled={!text.trim()}
+                    >
+                        Submit review
+                    </Button>
+                </Paper>
+            ) : (
+                <Typography sx={{ mt: 3 }} color="text.secondary">
+                    Login to leave a review
+                </Typography>
+            )}
         </Container>
     );
 };
