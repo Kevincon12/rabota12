@@ -77,6 +77,15 @@ const Place = () => {
         }
     };
 
+    const deleteImage = async (imageId: string) => {
+        try {
+            await api.delete(`/images/${imageId}`);
+            if (id) fetchPlace(id);
+        } catch (e: any) {
+            alert(e?.response?.data?.error || 'Delete image error');
+        }
+    };
+
     const uploadImage = async (e: any) => {
         if (!id) return;
 
@@ -147,15 +156,29 @@ const Place = () => {
                 </Box>
 
                 <Stack direction="row" spacing={2} sx={{ mt: 2, flexWrap: 'wrap' }}>
-                    {images.map((img: Image) => (
-                        <Card key={img._id} sx={{ width: 150 }}>
-                            <CardMedia
-                                component="img"
-                                height="120"
-                                image={`http://localhost:8000/uploads/${img.image}`}
-                            />
-                        </Card>
-                    ))}
+                    {images.length === 0 ? (
+                        <Typography sx={{ mt: 2 }}>No images</Typography>
+                    ) : (
+                        images.map((img: Image) => (
+                            <Card key={img._id} sx={{ width: 150, position: 'relative' }}>
+                                <CardMedia
+                                    component="img"
+                                    height="120"
+                                    image={`http://localhost:8000/uploads/${img.image}`}
+                                />
+
+                                {user?.role === 'admin' && (
+                                    <Button
+                                        size="small"
+                                        color="error"
+                                        onClick={() => deleteImage(img._id)}
+                                    >
+                                        Delete
+                                    </Button>
+                                )}
+                            </Card>
+                        ))
+                    )}
                 </Stack>
             </Paper>
 

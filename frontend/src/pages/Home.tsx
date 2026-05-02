@@ -60,7 +60,11 @@ const Home = () => {
                         </Typography>
 
                         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                            <Rating value={p.rating?.overall || 0} readOnly size="small" />
+                            <Rating
+                                value={p.rating?.overall || 0}
+                                readOnly
+                                size="small"
+                            />
                             <Typography variant="body2">
                                 {p.rating?.overall || 0}
                             </Typography>
@@ -80,10 +84,11 @@ const Home = () => {
                             <Button
                                 color="error"
                                 size="small"
+                                fullWidth
                                 sx={{ mt: 1 }}
                                 onClick={() => deletePlace(p._id)}
                             >
-                                Delete
+                                Delete place
                             </Button>
                         )}
                     </CardContent>
