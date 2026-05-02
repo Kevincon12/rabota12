@@ -21,7 +21,7 @@ interface Review {
     foodQuality: number;
     serviceQuality: number;
     interior: number;
-    user: { displayName: string };
+    user: { _id: string; displayName: string };
 }
 
 interface Image {
@@ -65,6 +65,15 @@ const Place = () => {
             fetchPlace(id);
         } catch (e: any) {
             alert(e?.response?.data?.error || 'Error');
+        }
+    };
+
+    const deleteReview = async (reviewId: string) => {
+        try {
+            await api.delete(`/reviews/${reviewId}`);
+            if (id) fetchPlace(id);
+        } catch (e: any) {
+            alert(e?.response?.data?.error || 'Delete error');
         }
     };
 
@@ -138,19 +147,15 @@ const Place = () => {
                 </Box>
 
                 <Stack direction="row" spacing={2} sx={{ mt: 2, flexWrap: 'wrap' }}>
-                    {images.length === 0 ? (
-                        <Typography sx={{ mt: 2 }}>No images</Typography>
-                    ) : (
-                        images.map((img: Image) => (
-                            <Card key={img._id} sx={{ width: 150 }}>
-                                <CardMedia
-                                    component="img"
-                                    height="120"
-                                    image={`http://localhost:8000/uploads/${img.image}`}
-                                />
-                            </Card>
-                        ))
-                    )}
+                    {images.map((img: Image) => (
+                        <Card key={img._id} sx={{ width: 150 }}>
+                            <CardMedia
+                                component="img"
+                                height="120"
+                                image={`http://localhost:8000/uploads/${img.image}`}
+                            />
+                        </Card>
+                    ))}
                 </Stack>
             </Paper>
 
@@ -161,15 +166,37 @@ const Place = () => {
                     {reviews.length === 0 ? (
                         <Typography>No reviews yet</Typography>
                     ) : (
-                        reviews.map((r: Review) => (
-                            <Paper key={r._id} sx={{ p: 2 }}>
-                                <Typography sx={{ fontWeight: 700 }}>
-                                    {r.user.displayName}
-                                </Typography>
+                        reviews.map((r: Review) => {
+                            const canDelete =
+                                user &&
+                                (user.role === 'admin' || user._id === r.user._id);
 
-                                <Typography>{r.text}</Typography>
-                            </Paper>
-                        ))
+                            return (
+                                <Paper key={r._id} sx={{ p: 2 }}>
+                                    <Stack
+                                        component="div"
+                                        direction="row"
+                                        justifyContent="space-between"
+                                        alignItems="center"
+                                    >
+                                        <Typography sx={{ fontWeight: 700 }}>
+                                            {r.user.displayName}
+                                        </Typography>
+
+                                        {canDelete && (
+                                            <Button
+                                                color="error"
+                                                onClick={() => deleteReview(r._id)}
+                                            >
+                                                Delete
+                                            </Button>
+                                        )}
+                                    </Stack>
+
+                                    <Typography>{r.text}</Typography>
+                                </Paper>
+                            );
+                        })
                     )}
                 </Stack>
             </Paper>
