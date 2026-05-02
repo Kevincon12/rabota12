@@ -38,40 +38,53 @@ const Place = () => {
     const [service, setService] = useState(5);
     const [interior, setInterior] = useState(5);
 
-    const fetchPlace = async () => {
-        const res = await api.get(`/places/${id}`);
+    const fetchPlace = async (placeId: string) => {
+        const res = await api.get(`/places/${placeId}`);
         setData(res.data);
     };
 
     useEffect(() => {
-        fetchPlace();
-    }, []);
+        if (id) {
+            fetchPlace(id);
+        }
+    }, [id]);
 
     const addReview = async () => {
-        await api.post('/reviews', {
-            place: id,
-            text,
-            foodQuality: food,
-            serviceQuality: service,
-            interior,
-        });
+        try {
+            if (!id) return;
+            if (!text.trim()) return;
 
-        setText('');
-        fetchPlace();
+            await api.post('/reviews', {
+                place: id,
+                text: text.trim(),
+                foodQuality: food,
+                serviceQuality: service,
+                interior,
+            });
+
+            setText('');
+            fetchPlace(id);
+        } catch (e: any) {
+            console.log(e?.response?.data);
+            alert(e?.response?.data?.error || 'Error sending review');
+        }
     };
 
     const uploadImage = async (e: any) => {
-        const file = e.target.files[0];
+        if (!id) return;
+
+        const file = e.target.files?.[0];
+        if (!file) return;
 
         const formData = new FormData();
-        formData.append('place', id!);
+        formData.append('place', id);
         formData.append('image', file);
 
         await api.post('/images', formData, {
             headers: { 'Content-Type': 'multipart/form-data' },
         });
 
-        fetchPlace();
+        fetchPlace(id);
     };
 
     if (!data) return null;
@@ -169,34 +182,21 @@ const Place = () => {
                 <Stack spacing={2} sx={{ mt: 2 }}>
                     <Box>
                         <Typography>Food</Typography>
-                        <Rating
-                            value={food}
-                            onChange={(_, v) => setFood(v || 1)}
-                        />
+                        <Rating value={food} onChange={(_, v) => setFood(v || 1)} />
                     </Box>
 
                     <Box>
                         <Typography>Service</Typography>
-                        <Rating
-                            value={service}
-                            onChange={(_, v) => setService(v || 1)}
-                        />
+                        <Rating value={service} onChange={(_, v) => setService(v || 1)} />
                     </Box>
 
                     <Box>
                         <Typography>Interior</Typography>
-                        <Rating
-                            value={interior}
-                            onChange={(_, v) => setInterior(v || 1)}
-                        />
+                        <Rating value={interior} onChange={(_, v) => setInterior(v || 1)} />
                     </Box>
                 </Stack>
 
-                <Button
-                    variant="contained"
-                    sx={{ mt: 3 }}
-                    onClick={addReview}
-                >
+                <Button variant="contained" sx={{ mt: 3 }} onClick={addReview}>
                     Submit review
                 </Button>
             </Paper>
