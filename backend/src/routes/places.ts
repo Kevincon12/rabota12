@@ -8,8 +8,44 @@ import multer from '../middleware/multer';
 const placesRouter = express.Router();
 
 placesRouter.get('/', async (_req, res) => {
-    const places = await Place.find().populate('user', 'displayName');
-    res.send(places);
+    try {
+        const places = await Place.find().populate('user', 'displayName');
+
+        const result = await Promise.all(
+            places.map(async (place) => {
+                const reviews = await Review.find({ place: place._id });
+                const imagesCount = await Image.countDocuments({ place: place._id });
+
+                let overall = 0;
+
+                if (reviews.length > 0) {
+                    const sumFood = reviews.reduce((acc, r: any) => acc + r.foodQuality, 0);
+                    const sumService = reviews.reduce((acc, r: any) => acc + r.serviceQuality, 0);
+                    const sumInterior = reviews.reduce((acc, r: any) => acc + r.interior, 0);
+
+                    const foodAvg = sumFood / reviews.length;
+                    const serviceAvg = sumService / reviews.length;
+                    const interiorAvg = sumInterior / reviews.length;
+
+                    overall = (foodAvg + serviceAvg + interiorAvg) / 3;
+                    overall = Number(overall.toFixed(1));
+                }
+
+                return {
+                    ...place.toObject(),
+                    rating: {
+                        overall,
+                        reviewsCount: reviews.length,
+                    },
+                    imagesCount,
+                };
+            })
+        );
+
+        res.send(result);
+    } catch (e) {
+        res.status(400).send({ error: 'Error fetching places' });
+    }
 });
 
 placesRouter.post('/', auth, multer.single('mainImage'), async (req, res) => {
