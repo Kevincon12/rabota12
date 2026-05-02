@@ -5,6 +5,7 @@ import config from './config';
 import usersRouter from "./routes/users";
 import placesRouter from "./routes/places";
 import reviewsRouter from "./routes/reviews";
+import imagesRouter from "./routes/images";
 
 const app = express();
 
@@ -15,6 +16,7 @@ app.use('/uploads', express.static('uploads'));
 app.use('/users', usersRouter);
 app.use('/places', placesRouter);
 app.use('/reviews', reviewsRouter);
+app.use('/images', imagesRouter);
 
 mongoose.connect(config.mongo);
 
