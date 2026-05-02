@@ -94,4 +94,25 @@ placesRouter.get('/:id', async (req, res) => {
     }
 });
 
+placesRouter.delete('/:id', auth, async (req, res) => {
+    const user = (req as any).user;
+
+    const place = await Place.findById(req.params.id);
+
+    if (!place) {
+        return res.status(404).send({ error: 'Not found' });
+    }
+
+    if (user.role !== 'admin') {
+        return res.status(403).send({ error: 'No access' });
+    }
+
+    await place.deleteOne();
+
+    await Review.deleteMany({ place: place._id });
+    await Image.deleteMany({ place: place._id });
+
+    res.send({ message: 'Deleted' });
+});
+
 export default placesRouter;
